@@ -39,3 +39,16 @@ make build         # Build using Makefile
 make install       # Install globally
 make test          # Run tests
 ```
+
+### Test fixture -- generate fake convo
+Usage:
+
+  # Run with default database (bonsai.db)
+  # Default behavior: Uses ~/.bonsai/bonsai.db (same as CLI tool)
+  ./scripts/generate_fake_data.sh
+
+  # Or specify custom database path
+  ./scripts/generate_fake_data.sh path/to/your/database.db
+
+  # Or run the Go script directly
+  go run scripts/generate_fake_data.go [database_path]
