@@ -211,3 +211,104 @@ func (db *Database) ClearCurrentNode() error {
 
 	return nil
 }
+
+// GetNodeAndAllChildren retrieves a node and all its descendants recursively
+func (db *Database) GetNodeAndAllChildren(nodeID string) ([]*Node, error) {
+	var allNodes []*Node
+	visited := make(map[string]bool)
+
+	if err := db.collectNodeAndChildren(nodeID, &allNodes, visited); err != nil {
+		return nil, err
+	}
+
+	return allNodes, nil
+}
+
+// collectNodeAndChildren is a recursive helper function to collect all descendant nodes
+func (db *Database) collectNodeAndChildren(nodeID string, allNodes *[]*Node, visited map[string]bool) error {
+	// Avoid infinite loops
+	if visited[nodeID] {
+		return nil
+	}
+	visited[nodeID] = true
+
+	// Get the current node
+	query := `SELECT id, content, type, parent, children, model FROM Node WHERE id = ?`
+	row := db.conn.QueryRow(query, nodeID)
+
+	node := &Node{}
+	err := row.Scan(&node.ID, &node.Content, &node.Type, &node.Parent, &node.Children, &node.Model)
+	if err == sql.ErrNoRows {
+		return nil // Node doesn't exist, skip
+	}
+	if err != nil {
+		return fmt.Errorf("failed to scan node %s: %w", nodeID, err)
+	}
+
+	*allNodes = append(*allNodes, node)
+
+	// Find all children of this node
+	childQuery := `SELECT id FROM Node WHERE parent = ?`
+	rows, err := db.conn.Query(childQuery, nodeID)
+	if err != nil {
+		return fmt.Errorf("failed to query children of node %s: %w", nodeID, err)
+	}
+	defer rows.Close()
+
+	var childIDs []string
+	for rows.Next() {
+		var childID string
+		if err := rows.Scan(&childID); err != nil {
+			return fmt.Errorf("failed to scan child ID: %w", err)
+		}
+		childIDs = append(childIDs, childID)
+	}
+
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("error iterating over child rows: %w", err)
+	}
+
+	// Recursively collect each child and their descendants
+	for _, childID := range childIDs {
+		if err := db.collectNodeAndChildren(childID, allNodes, visited); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// DeleteNodeAndAllChildren deletes a node and all its descendants recursively
+func (db *Database) DeleteNodeAndAllChildren(nodeID string) (int, error) {
+	// First, get all nodes to be deleted
+	nodesToDelete, err := db.GetNodeAndAllChildren(nodeID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get nodes to delete: %w", err)
+	}
+
+	if len(nodesToDelete) == 0 {
+		return 0, nil
+	}
+
+	// Delete all nodes (children first, then parents)
+	// We'll delete in reverse order to handle foreign key constraints
+	deletedCount := 0
+	for i := len(nodesToDelete) - 1; i >= 0; i-- {
+		node := nodesToDelete[i]
+
+		deleteQuery := `DELETE FROM Node WHERE id = ?`
+		result, err := db.conn.Exec(deleteQuery, node.ID)
+		if err != nil {
+			return deletedCount, fmt.Errorf("failed to delete node %s: %w", node.ID, err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return deletedCount, fmt.Errorf("failed to get rows affected for node %s: %w", node.ID, err)
+		}
+
+		deletedCount += int(rowsAffected)
+	}
+
+	return deletedCount, nil
+}
