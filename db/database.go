@@ -47,7 +47,11 @@ func (db *Database) Initialize() error {
 	createNodeTable := `
 	CREATE TABLE IF NOT EXISTS Node (
 		id TEXT PRIMARY KEY,
-		content TEXT NOT NULL
+		content TEXT NOT NULL,
+		type TEXT NOT NULL CHECK (type IN ('user', 'llm')),
+		parent TEXT,
+		children TEXT DEFAULT '[]',
+		model TEXT
 	);`
 
 	if _, err := db.conn.Exec(createNodeTable); err != nil {
