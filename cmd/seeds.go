@@ -44,6 +44,13 @@ var seedsCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// Get current working node
+		currentNodeID, err := database.GetCurrentNode()
+		if err != nil {
+			fmt.Printf("Failed to get current node: %v\n", err)
+			os.Exit(1)
+		}
+
 		if len(rootNodes) == 0 {
 			fmt.Println("No root nodes found.")
 			return
@@ -51,10 +58,17 @@ var seedsCmd = &cobra.Command{
 
 		fmt.Printf("🌱 Found %d seed(s) in the Bonsai garden:\n\n", len(rootNodes))
 		for i, node := range rootNodes {
-			fmt.Printf("%d. ID: %s\n", i+1, node.ID)
-			fmt.Printf("   Content: %s\n", node.Content)
+			prefix := "  "
+			if currentNodeID != nil && *currentNodeID == node.ID {
+				prefix = "* " // Mark current node with asterisk
+			}
+			fmt.Printf("%s%d. ID: %s\n", prefix, i+1, node.ID)
+			fmt.Printf("%s   Content: %s\n", prefix, node.Content)
 			if node.Model != nil {
-				fmt.Printf("   Model: %s\n", *node.Model)
+				fmt.Printf("%s   Model: %s\n", prefix, *node.Model)
+			}
+			if currentNodeID != nil && *currentNodeID == node.ID {
+				fmt.Printf("%s   (current working node)\n", prefix)
 			}
 			fmt.Println()
 		}

@@ -68,6 +68,16 @@ func (db *Database) Initialize() error {
 		return fmt.Errorf("failed to create Node table: %w", err)
 	}
 
+	createConfigTable := `
+	CREATE TABLE IF NOT EXISTS Config (
+		key TEXT PRIMARY KEY,
+		value TEXT
+	);`
+
+	if _, err := db.conn.Exec(createConfigTable); err != nil {
+		return fmt.Errorf("failed to create Config table: %w", err)
+	}
+
 	return nil
 }
 
@@ -100,7 +110,16 @@ func (db *Database) CreateRootNode(content string, model *string) (*Node, error)
 		Model:    model,
 	}
 
-	return node, db.InsertNode(node)
+	if err := db.InsertNode(node); err != nil {
+		return nil, err
+	}
+
+	// Set this as the current working node
+	if err := db.SetCurrentNode(node.ID); err != nil {
+		return node, fmt.Errorf("created node but failed to set as current: %w", err)
+	}
+
+	return node, nil
 }
 
 // InsertNode inserts a node into the database
@@ -148,4 +167,47 @@ func (db *Database) GetRootNodes() ([]*Node, error) {
 	}
 
 	return nodes, nil
+}
+
+// GetCurrentNode retrieves the current working node ID
+func (db *Database) GetCurrentNode() (*string, error) {
+	query := `SELECT value FROM Config WHERE key = 'current_node'`
+
+	var nodeID string
+	err := db.conn.QueryRow(query).Scan(&nodeID)
+	if err == sql.ErrNoRows {
+		return nil, nil // No current node set
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current node: %w", err)
+	}
+
+	return &nodeID, nil
+}
+
+// SetCurrentNode sets the current working node
+func (db *Database) SetCurrentNode(nodeID string) error {
+	query := `
+		INSERT INTO Config (key, value) VALUES ('current_node', ?)
+		ON CONFLICT(key) DO UPDATE SET value = ?
+	`
+
+	_, err := db.conn.Exec(query, nodeID, nodeID)
+	if err != nil {
+		return fmt.Errorf("failed to set current node: %w", err)
+	}
+
+	return nil
+}
+
+// ClearCurrentNode removes the current working node setting
+func (db *Database) ClearCurrentNode() error {
+	query := `DELETE FROM Config WHERE key = 'current_node'`
+
+	_, err := db.conn.Exec(query)
+	if err != nil {
+		return fmt.Errorf("failed to clear current node: %w", err)
+	}
+
+	return nil
 }
