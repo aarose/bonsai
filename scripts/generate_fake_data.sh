@@ -11,9 +11,6 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}Generating fake conversation data...${NC}"
 
-# Default database path
-DB_PATH=${1:-"bonsai.db"}
-
 # Run the Go script
 go run scripts/generate_fake_data.go "$DB_PATH"
 
