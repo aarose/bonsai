@@ -68,7 +68,6 @@ func (db *Database) Initialize() error {
 		return fmt.Errorf("failed to create Node table: %w", err)
 	}
 
-	fmt.Println("Database initialized successfully")
 	return nil
 }
 
@@ -117,4 +116,36 @@ func (db *Database) InsertNode(node *Node) error {
 	}
 
 	return nil
+}
+
+// GetRootNodes retrieves all nodes that have no parent (root nodes)
+func (db *Database) GetRootNodes() ([]*Node, error) {
+	query := `
+		SELECT id, content, type, parent, children, model
+		FROM Node
+		WHERE parent IS NULL
+		ORDER BY id
+	`
+
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query root nodes: %w", err)
+	}
+	defer rows.Close()
+
+	var nodes []*Node
+	for rows.Next() {
+		node := &Node{}
+		err := rows.Scan(&node.ID, &node.Content, &node.Type, &node.Parent, &node.Children, &node.Model)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan node: %w", err)
+		}
+		nodes = append(nodes, node)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return nodes, nil
 }
