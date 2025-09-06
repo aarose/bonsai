@@ -91,14 +91,14 @@ func (db *Database) GetPath() string {
 }
 
 // CreateRootNode creates a new root node with the given content and user type
-func (db *Database) CreateRootNode(content string) (*Node, error) {
+func (db *Database) CreateRootNode(content string, model *string) (*Node, error) {
 	node := &Node{
 		ID:       uuid.New().String(),
 		Content:  content,
 		Type:     "user",
 		Parent:   nil,
 		Children: "[]",
-		Model:    nil,
+		Model:    model,
 	}
 
 	return node, db.InsertNode(node)
