@@ -6,12 +6,22 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/uuid"
 	_ "modernc.org/sqlite"
 )
 
 type Database struct {
 	conn *sql.DB
 	path string
+}
+
+type Node struct {
+	ID       string `json:"id"`
+	Content  string `json:"content"`
+	Type     string `json:"type"`
+	Parent   *string `json:"parent,omitempty"`
+	Children string `json:"children"`
+	Model    *string `json:"model,omitempty"`
 }
 
 // NewDatabase creates a new database connection
@@ -78,4 +88,33 @@ func (db *Database) GetConnection() *sql.DB {
 // GetPath returns the database file path
 func (db *Database) GetPath() string {
 	return db.path
+}
+
+// CreateRootNode creates a new root node with the given content and user type
+func (db *Database) CreateRootNode(content string) (*Node, error) {
+	node := &Node{
+		ID:       uuid.New().String(),
+		Content:  content,
+		Type:     "user",
+		Parent:   nil,
+		Children: "[]",
+		Model:    nil,
+	}
+
+	return node, db.InsertNode(node)
+}
+
+// InsertNode inserts a node into the database
+func (db *Database) InsertNode(node *Node) error {
+	query := `
+		INSERT INTO Node (id, content, type, parent, children, model)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`
+
+	_, err := db.conn.Exec(query, node.ID, node.Content, node.Type, node.Parent, node.Children, node.Model)
+	if err != nil {
+		return fmt.Errorf("failed to insert node: %w", err)
+	}
+
+	return nil
 }
