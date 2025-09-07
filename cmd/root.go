@@ -10,10 +10,27 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const longDescription = `🌳 Bonsai is a CLI tool for managing LLM conversation trees.
+
+It provides a structured way to explore multiple directions of a conversation,
+experiment freely, and return to earlier points without friction.
+
+Think of it as Git for your LLM sessions — a system that lets you branch, reseed,
+and graft ideas without losing track of the bigger picture.
+
+With Bonsai, you can:
+• Maintain clean histories
+• Compare alternate paths
+• Keep your conversations organized as they grow
+
+The result is a workflow where creativity and control coexist, making it easy to
+cultivate ideas, revisit roots, and guide your conversations toward meaningful
+outcomes.`
+
 var rootCmd = &cobra.Command{
 	Use:   "bai [message]",
-	Short: "Bonsai is a CLI tool for managing LLM conversation trees",
-	Long: `Bonsai is a CLI tool for managing LLM conversation trees.`,
+	Short: "🌳 Bonsai is a CLI tool for managing LLM conversation trees",
+	Long:  longDescription,
 	Args:                  cobra.ArbitraryArgs,
 	DisableFlagParsing:    false,
 	SilenceUsage:         true,
