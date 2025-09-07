@@ -122,6 +122,35 @@ func (db *Database) CreateRootNode(content string, model *string) (*Node, error)
 	return node, nil
 }
 
+// CreateChildNode creates a new child node with the given content, parent, and optional model
+func (db *Database) CreateChildNode(content, parentID string, model *string) (*Node, error) {
+	// Verify parent exists
+	_, err := db.GetNodeByID(parentID)
+	if err != nil {
+		return nil, fmt.Errorf("parent node not found: %w", err)
+	}
+
+	node := &Node{
+		ID:       uuid.New().String(),
+		Content:  content,
+		Type:     "user",
+		Parent:   &parentID,
+		Children: "[]",
+		Model:    model,
+	}
+
+	if err := db.InsertNode(node); err != nil {
+		return nil, err
+	}
+
+	// Set this as the current working node
+	if err := db.SetCurrentNode(node.ID); err != nil {
+		return node, fmt.Errorf("created node but failed to set as current: %w", err)
+	}
+
+	return node, nil
+}
+
 // InsertNode inserts a node into the database
 func (db *Database) InsertNode(node *Node) error {
 	query := `
