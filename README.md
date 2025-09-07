@@ -1,15 +1,17 @@
 # Bonsai
-🌳 Bonsai is a CLI tool and for managing LLM conversation trees. AI's in the name.
+🌳 Bonsai is a CLI tool for managing LLM conversation trees. AI's in the name.
 
-![Bonsai logo](assets/bonsai.png)
+<img src="assets/bonsai.png" alt="Bonsai logo" width="300" height="200">
 
-It provides a structured way to explore multiple directions of a conversation, experiment freely, and return to earlier points to continue down different paths without friction. Think of it as Git for your LLM sessions: a system that lets you branch, reseed, and graft ideas without losing track of the bigger picture.
+Bonsai provides a structured way to explore multiple directions of a conversation, experiment freely, and return to earlier points to continue down different paths without friction. Think of it as Git for your LLM sessions: a system that lets you branch, reseed, and graft ideas without losing track of the bigger picture.
 
 With Bonsai, you can:
 - Maintain clean histories
 - Compare alternate paths
 - Keep your conversations organized as they grow
 - Use the visualization tool to better understand the tree
+
+![Visualization Screenshot](assets/visualization.png)
 
 The result is a workflow where creativity and control coexist, making it easy to cultivate ideas, revisit roots, and guide your conversations toward meaningful
 outcomes.
@@ -131,6 +133,24 @@ bai "What are goroutines?"
 bai "Explain with a code example" --llm gpt-4
 ```
 
+### Visualization
+![Visualization Screenshot](assets/visualization.png)
+
+Launch visualization (opens on http://localhost:8080)
+```bash
+./bai visualize
+```
+
+Custom port
+```bash
+./bai visualize --port 3000
+```
+
+Custom database
+```
+./bai visualize --database ./custom.db
+```
+
 ## Dev Notes
 
 ### Key Features
@@ -165,24 +185,6 @@ Or specify custom database path
 Or run the Go script directly
 ```bash
 go run scripts/generate_fake_data.go [database_path]
-```
-
-### Visualization
-![Visualization Screenshot](assets/visualization.png)
-
-Launch visualization (opens on http://localhost:8080)
-```bash
-./bai visualize
-```
-
-Custom port
-```bash
-./bai visualize --port 3000
-```
-
-Custom database
-```
-./bai visualize --database ./custom.db
 ```
 
 ## How is `bai` pronounced?
