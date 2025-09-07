@@ -80,6 +80,20 @@ bai offshoots
 bai cherry-pick <node-id>
 ```
 
+Example output:
+```
+$bai seeds
+🌱 Found 2 seed(s) in the Bonsai garden:
+
+ID: f47ac10b-58cc-4372-a567-0e02b2c3d479
+🧠 Model: claude-3-haiku
+💬 Message: I want to plan a trip by train from Ottawa to a nearby city. What are my options?
+
+ID: fbb2e9dd-4b0b-4462-93eb-1554db2e9fe1 (contains current working node)
+🧠 Model: claude-3-haiku
+💬 Message: Hi there, please tell me a knock knock joke
+```
+
 ### LLM Integration
 When you use the `--llm` flag or set a model on a seed conversation, bai will:
 1. Create your user message as a node
