@@ -327,6 +327,48 @@ func (db *Database) GetDirectChildren(parentID string) ([]*Node, error) {
 	return nodes, nil
 }
 
+// GetParentPath retrieves the parent chain from a given node up to the root
+// If maxLevels is 0 or negative, returns the complete path to the root
+// If maxLevels is positive, returns up to that many parent levels
+func (db *Database) GetParentPath(nodeID string, maxLevels int) ([]*Node, error) {
+	var parentChain []*Node
+	currentNodeID := nodeID
+	levelsTraversed := 0
+
+	for {
+		// Stop if we've reached the maximum levels (when maxLevels > 0)
+		if maxLevels > 0 && levelsTraversed >= maxLevels {
+			break
+		}
+
+		// Get the current node
+		currentNode, err := db.GetNodeByID(currentNodeID)
+		if err != nil {
+			return parentChain, fmt.Errorf("failed to get node %s: %w", currentNodeID, err)
+		}
+
+		// If this node has no parent, we've reached a root node
+		if currentNode.Parent == nil {
+			break
+		}
+
+		// Get the parent node
+		parentNode, err := db.GetNodeByID(*currentNode.Parent)
+		if err != nil {
+			return parentChain, fmt.Errorf("failed to get parent node %s: %w", *currentNode.Parent, err)
+		}
+
+		// Add parent to the chain
+		parentChain = append(parentChain, parentNode)
+
+		// Move to the parent for the next iteration
+		currentNodeID = *currentNode.Parent
+		levelsTraversed++
+	}
+
+	return parentChain, nil
+}
+
 // DeleteNodeAndAllChildren deletes a node and all its descendants recursively
 func (db *Database) DeleteNodeAndAllChildren(nodeID string) (int, error) {
 	// First, get all nodes to be deleted
