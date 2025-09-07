@@ -100,8 +100,8 @@ var seedCmd = &cobra.Command{
 						if err != nil {
 							fmt.Printf("Warning: Failed to create LLM response node: %v\n", err)
 						} else {
-							fmt.Printf("Created LLM response node with ID: %s\n", llmNode.ID)
-							fmt.Printf("LLM Response: %s\n", llmNode.Content)
+							fmt.Printf("Created LLM response node with ID: \033[33m%s\033[0m\n", llmNode.ID)
+							fmt.Printf("🤖 LLM Response: %s\n", llmNode.Content)
 						}
 					}
 				}

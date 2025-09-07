@@ -34,17 +34,6 @@ type Choice struct {
 	Message Message `json:"message"`
 }
 
-// Message represents a message in the conversation
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-// APIError represents an API error
-type APIError struct {
-	Message string `json:"message"`
-	Type    string `json:"type"`
-}
 
 // NewOpenAIClient creates a new OpenAI client
 func NewOpenAIClient(config Config) (*OpenAIClient, error) {
@@ -62,6 +51,17 @@ func NewOpenAIClient(config Config) (*OpenAIClient, error) {
 
 // GenerateResponse generates a response using OpenAI API
 func (c *OpenAIClient) GenerateResponse(ctx context.Context, prompt string, model string) (string, error) {
+	messages := []Message{
+		{
+			Role:    "user",
+			Content: prompt,
+		},
+	}
+	return c.GenerateResponseFromHistory(ctx, messages, model)
+}
+
+// GenerateResponseFromHistory generates a response using conversation history
+func (c *OpenAIClient) GenerateResponseFromHistory(ctx context.Context, messages []Message, model string) (string, error) {
 	// Use the provided model or default to gpt-3.5-turbo
 	if model == "" {
 		model = "gpt-3.5-turbo"
@@ -71,13 +71,8 @@ func (c *OpenAIClient) GenerateResponse(ctx context.Context, prompt string, mode
 	model = normalizeOpenAIModel(model)
 
 	request := OpenAIRequest{
-		Model: model,
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: prompt,
-			},
-		},
+		Model:    model,
+		Messages: messages,
 	}
 
 	if c.config.MaxTokens > 0 {

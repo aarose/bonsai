@@ -5,9 +5,22 @@ import (
 	"fmt"
 )
 
+// Message represents a message in the conversation
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// APIError represents an API error
+type APIError struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+}
+
 // Client defines the interface for LLM providers
 type Client interface {
 	GenerateResponse(ctx context.Context, prompt string, model string) (string, error)
+	GenerateResponseFromHistory(ctx context.Context, messages []Message, model string) (string, error)
 	GetAvailableModels() []string
 	GetProviderName() string
 }
@@ -55,4 +68,17 @@ func contains(s string, substrings []string) bool {
 		}
 	}
 	return false
+}
+
+// NodeToMessage converts a database node to an LLM message
+// Maps node types: "user" -> "user", "llm" -> "assistant"
+func NodeToMessage(nodeType, content string) Message {
+	role := "user"
+	if nodeType == "llm" {
+		role = "assistant"
+	}
+	return Message{
+		Role:    role,
+		Content: content,
+	}
 }

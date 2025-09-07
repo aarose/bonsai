@@ -127,11 +127,28 @@ var rootCmd = &cobra.Command{
 				if err != nil {
 					fmt.Printf("Warning: Failed to create LLM client: %v\n", err)
 				} else {
-					// Generate response with timeout
+					// Get conversation history from the newly created node to root
+					conversationHistory, err := database.GetConversationHistory(node.ID)
+
+					var response string
 					ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 					defer cancel()
 
-					response, err := client.GenerateResponse(ctx, message, *model)
+					if err != nil {
+						fmt.Printf("Warning: Failed to get conversation history: %v\n", err)
+						// Fallback to single message
+						response, err = client.GenerateResponse(ctx, message, *model)
+					} else {
+						// Convert conversation history to LLM messages
+						var messages []llm.Message
+						for _, historyNode := range conversationHistory {
+							messages = append(messages, llm.NodeToMessage(historyNode.Type, historyNode.Content))
+						}
+
+						// Generate response with conversation history
+						response, err = client.GenerateResponseFromHistory(ctx, messages, *model)
+					}
+
 					if err != nil {
 						fmt.Printf("Warning: Failed to get LLM response: %v\n", err)
 					} else {
@@ -140,8 +157,8 @@ var rootCmd = &cobra.Command{
 						if err != nil {
 							fmt.Printf("Warning: Failed to create LLM response node: %v\n", err)
 						} else {
-							fmt.Printf("Created LLM response node with ID: %s\n", llmNode.ID)
-							fmt.Printf("LLM Response: %s\n", llmNode.Content)
+							fmt.Printf("Created LLM response node with ID: \033[33m%s\033[0m\n", llmNode.ID)
+							fmt.Printf("🤖 LLM Response: %s\n", llmNode.Content)
 						}
 					}
 				}

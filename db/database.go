@@ -414,6 +414,35 @@ func (db *Database) GetParentPath(nodeID string, maxLevels int) ([]*Node, error)
 	return parentChain, nil
 }
 
+// GetConversationHistory retrieves the conversation history from a given node up to the root
+// Returns messages in chronological order (root to current), suitable for sending to LLMs
+func (db *Database) GetConversationHistory(nodeID string) ([]*Node, error) {
+	var conversationChain []*Node
+	currentNodeID := nodeID
+
+	// Traverse up the parent chain to collect all nodes
+	for {
+		// Get the current node
+		currentNode, err := db.GetNodeByID(currentNodeID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get node %s: %w", currentNodeID, err)
+		}
+
+		// Add current node to the front of the chain (we'll reverse it later)
+		conversationChain = append([]*Node{currentNode}, conversationChain...)
+
+		// If this node has no parent, we've reached a root node
+		if currentNode.Parent == nil {
+			break
+		}
+
+		// Move to the parent for the next iteration
+		currentNodeID = *currentNode.Parent
+	}
+
+	return conversationChain, nil
+}
+
 // DeleteNodeAndAllChildren deletes a node and all its descendants recursively
 func (db *Database) DeleteNodeAndAllChildren(nodeID string) (int, error) {
 	// First, get all nodes to be deleted

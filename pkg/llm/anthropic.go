@@ -51,6 +51,17 @@ func NewAnthropicClient(config Config) (*AnthropicClient, error) {
 
 // GenerateResponse generates a response using Anthropic API
 func (c *AnthropicClient) GenerateResponse(ctx context.Context, prompt string, model string) (string, error) {
+	messages := []Message{
+		{
+			Role:    "user",
+			Content: prompt,
+		},
+	}
+	return c.GenerateResponseFromHistory(ctx, messages, model)
+}
+
+// GenerateResponseFromHistory generates a response using conversation history
+func (c *AnthropicClient) GenerateResponseFromHistory(ctx context.Context, messages []Message, model string) (string, error) {
 	// Use the provided model or default to claude-3-haiku
 	if model == "" {
 		model = "claude-3-haiku-20240307"
@@ -67,12 +78,7 @@ func (c *AnthropicClient) GenerateResponse(ctx context.Context, prompt string, m
 	request := AnthropicRequest{
 		Model:     model,
 		MaxTokens: maxTokens,
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: prompt,
-			},
-		},
+		Messages:  messages,
 	}
 
 	jsonData, err := json.Marshal(request)
