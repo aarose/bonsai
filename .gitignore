@@ -35,3 +35,4 @@ bai
 bin/
 *.db
 bonsai
+dist/
