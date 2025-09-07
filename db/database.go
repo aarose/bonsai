@@ -16,11 +16,11 @@ type Database struct {
 }
 
 type Node struct {
-	ID       string `json:"id"`
-	Content  string `json:"content"`
-	Type     string `json:"type"`
+	ID       string  `json:"id"`
+	Content  string  `json:"content"`
+	Type     string  `json:"type"`
 	Parent   *string `json:"parent,omitempty"`
-	Children string `json:"children"`
+	Children string  `json:"children"`
 	Model    *string `json:"model,omitempty"`
 }
 
@@ -159,6 +159,12 @@ func (db *Database) CreateChildNodeWithType(content, parentID, nodeType string, 
 	}
 
 	return node, nil
+}
+
+// CreateLLMResponseNode creates a new LLM response node as a child of the specified parent
+func (db *Database) CreateLLMResponseNode(parentID, content, model string) (*Node, error) {
+	modelPtr := &model
+	return db.CreateChildNodeWithType(content, parentID, "llm", modelPtr)
 }
 
 // InsertNode inserts a node into the database
