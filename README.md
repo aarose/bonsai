@@ -1,16 +1,15 @@
 # Bonsai
-🌳 Bonsai is a CLI tool for managing LLM conversation trees. AI's in the name.
+🌳 Bonsai is a CLI tool and for managing LLM conversation trees. AI's in the name.
 
 ![Bonsai logo](assets/bonsai.png)
 
-It provides a structured way to explore multiple directions of a conversation, experiment freely, and return to earlier points without friction.
-
-Think of it as Git for your LLM sessions: a system that lets you branch, reseed, and graft ideas without losing track of the bigger picture.
+It provides a structured way to explore multiple directions of a conversation, experiment freely, and return to earlier points to continue down different paths without friction. Think of it as Git for your LLM sessions: a system that lets you branch, reseed, and graft ideas without losing track of the bigger picture.
 
 With Bonsai, you can:
-• Maintain clean histories
-• Compare alternate paths
-• Keep your conversations organized as they grow
+- Maintain clean histories
+- Compare alternate paths
+- Keep your conversations organized as they grow
+- Use the visualization tool to better understand the tree
 
 The result is a workflow where creativity and control coexist, making it easy to cultivate ideas, revisit roots, and guide your conversations toward meaningful
 outcomes.
@@ -153,5 +152,5 @@ Custom database
 ./bai visualize --database ./custom.db
 ```
 
-# How is `bai` pronounced?
+## How is `bai` pronounced?
 It is pronounced "bye", as in *NSYNC's "Bye Bye Bye".
