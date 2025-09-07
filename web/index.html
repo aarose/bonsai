@@ -73,6 +73,7 @@
             stroke: #229954;
         }
 
+
         .node:hover {
             stroke-width: 3px;
         }
@@ -101,11 +102,32 @@
             background: rgba(0, 0, 0, 0.9);
             color: white;
             border-radius: 4px;
-            pointer-events: none;
+            pointer-events: auto;
             opacity: 0;
             max-width: 300px;
             line-height: 1.4;
             z-index: 1000;
+            cursor: default;
+        }
+
+        .tooltip .node-id {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            cursor: pointer;
+            display: inline-block;
+            margin: 2px 0;
+        }
+
+        .tooltip .node-id:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .tooltip .copy-hint {
+            font-size: 10px;
+            color: #bbb;
+            margin-top: 4px;
         }
 
         .legend {
@@ -146,7 +168,7 @@
 <body>
     <div class="container">
         <h1>🌳 Bonsai Conversation Tree</h1>
-        
+
         <div class="controls">
             <button onclick="refreshData()">🔄 Refresh</button>
             <button onclick="resetZoom()">🔍 Reset Zoom</button>
@@ -175,22 +197,98 @@
     <script>
         // Configuration
         const margin = {top: 40, right: 120, bottom: 40, left: 120};
-        const width = 1000 - margin.left - margin.right;
-        const height = 600 - margin.bottom - margin.top;
+        const baseWidth = 1200;
+        const baseHeight = 800;
 
-        let svg, g, tree, root;
-        let tooltip = d3.select(".tooltip");
+        let svg, g, tooltip = d3.select(".tooltip");
+        let forests = []; // Array to hold multiple tree hierarchies
+        let tooltipTimeout; // For delayed hiding
+
+        // Tooltip handling functions
+        function showTooltip(event, d) {
+            // Clear any pending hide timeout
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = null;
+            }
+
+            const content = d.data.content.length > 200 ?
+                d.data.content.substring(0, 200) + "..." :
+                d.data.content;
+
+            tooltip.html(`
+                <strong>${d.data.type.toUpperCase()}</strong><br/>
+                <span class="node-id" onclick="copyToClipboard('${d.data.id}')" title="Click to copy">${d.data.id}</span><br/>
+                ${content}
+                ${d.data.model ? `<br/><em>Model: ${d.data.model}</em>` : ''}
+                <div class="copy-hint">💡 Click ID to copy</div>
+            `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
+
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+
+            // Add mouse events to tooltip itself
+            tooltip.on("mouseenter", function() {
+                // Clear timeout when hovering over tooltip
+                if (tooltipTimeout) {
+                    clearTimeout(tooltipTimeout);
+                    tooltipTimeout = null;
+                }
+            });
+
+            tooltip.on("mouseleave", function() {
+                hideTooltipDelayed();
+            });
+        }
+
+        function hideTooltipDelayed() {
+            tooltipTimeout = setTimeout(() => {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            }, 100); // Small delay to allow moving to tooltip
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Show temporary feedback
+                const originalHtml = tooltip.html();
+                tooltip.html(originalHtml.replace('💡 Click ID to copy', '✅ Copied to clipboard!'));
+                setTimeout(() => {
+                    tooltip.html(originalHtml);
+                }, 1000);
+            }).catch(function(err) {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+
+                // Show feedback
+                const originalHtml = tooltip.html();
+                tooltip.html(originalHtml.replace('💡 Click ID to copy', '✅ Copied to clipboard!'));
+                setTimeout(() => {
+                    tooltip.html(originalHtml);
+                }, 1000);
+            });
+        }
 
         // Initialize the visualization
         function init() {
             // Clear container
             d3.select("#tree-container").selectAll("*").remove();
 
-            // Create SVG
+            // Start with base dimensions (will be adjusted for multiple trees)
             svg = d3.select("#tree-container")
                 .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
+                .attr("width", baseWidth)
+                .attr("height", baseHeight)
                 .call(d3.zoom()
                     .scaleExtent([0.1, 3])
                     .on("zoom", function(event) {
@@ -199,9 +297,6 @@
 
             g = svg.append("g")
                 .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            // Create tree layout
-            tree = d3.tree().size([height, width]);
 
             loadData();
         }
@@ -256,27 +351,71 @@
                 }
             });
 
-            // Return the first root (we'll handle multiple roots later if needed)
-            return roots[0] || null;
+            // Return array of roots for forest layout
+            return roots;
         }
 
-        // Render the tree
+        // Render multiple trees (forest)
         function renderTree(data) {
-            const hierarchyData = buildHierarchy(data);
-            
-            if (!hierarchyData) {
+            const rootNodes = buildHierarchy(data);
+
+            if (!rootNodes || rootNodes.length === 0) {
                 showStatus("No valid tree structure found in data.");
                 return;
             }
 
-            root = d3.hierarchy(hierarchyData);
-            root.x0 = height / 2;
-            root.y0 = 0;
+            // Clear previous forests
+            forests = [];
+            g.selectAll("*").remove();
 
-            // Start with all nodes expanded
-            expandAllNodes(root);
+            // Calculate layout dimensions
+            const treesPerRow = Math.ceil(Math.sqrt(rootNodes.length));
+            const treeWidth = Math.max(300, (baseWidth - margin.left - margin.right) / treesPerRow);
+            const treeHeight = Math.max(200, (baseHeight - margin.top - margin.bottom) / Math.ceil(rootNodes.length / treesPerRow));
 
-            update(root);
+            // Adjust SVG size if needed
+            const totalWidth = treesPerRow * treeWidth + margin.left + margin.right;
+            const totalHeight = Math.ceil(rootNodes.length / treesPerRow) * treeHeight + margin.top + margin.bottom;
+
+            svg.attr("width", Math.max(baseWidth, totalWidth))
+               .attr("height", Math.max(baseHeight, totalHeight));
+
+            // Create hierarchy for each root and position them
+            rootNodes.forEach((rootData, index) => {
+                const row = Math.floor(index / treesPerRow);
+                const col = index % treesPerRow;
+                const offsetX = col * treeWidth;
+                const offsetY = row * treeHeight;
+
+                const hierarchy = d3.hierarchy(rootData);
+                hierarchy.x0 = treeHeight / 2;
+                hierarchy.y0 = 0;
+
+                // Create tree layout for this hierarchy
+                const treeLayout = d3.tree().size([treeHeight * 0.8, treeWidth * 0.6]);
+
+                const forestInfo = {
+                    root: hierarchy,
+                    tree: treeLayout,
+                    offsetX: offsetX,
+                    offsetY: offsetY,
+                    index: index
+                };
+
+                forests.push(forestInfo);
+
+                // Start with all nodes expanded
+                expandAllNodes(hierarchy);
+
+                // Create a group for this tree
+                const treeGroup = g.append("g")
+                    .attr("class", `tree-${index}`)
+                    .attr("transform", `translate(${offsetX}, ${offsetY})`);
+
+                forestInfo.group = treeGroup;
+
+                updateTree(forestInfo);
+            });
         }
 
         // Toggle children on click
@@ -288,7 +427,34 @@
                 d.children = d._children;
                 d._children = null;
             }
-            update(d);
+
+            // Find which forest this node belongs to and update that tree
+            const forestInfo = findForestForNode(d);
+            if (forestInfo) {
+                updateTree(forestInfo);
+            }
+        }
+
+        // Find which forest a node belongs to
+        function findForestForNode(node) {
+            for (const forestInfo of forests) {
+                if (containsNode(forestInfo.root, node)) {
+                    return forestInfo;
+                }
+            }
+            return null;
+        }
+
+        // Check if a tree contains a specific node
+        function containsNode(root, targetNode) {
+            if (root === targetNode) return true;
+            if (root.children) {
+                return root.children.some(child => containsNode(child, targetNode));
+            }
+            if (root._children) {
+                return root._children.some(child => containsNode(child, targetNode));
+            }
+            return false;
         }
 
         // Collapse node
@@ -300,18 +466,22 @@
             }
         }
 
-        // Update tree
-        function update(source) {
+        // Update a single tree
+        function updateTree(forestInfo) {
+            const source = forestInfo.root;
+            const group = forestInfo.group;
+            const tree = forestInfo.tree;
+
             // Compute new tree layout
-            const treeData = tree(root);
+            const treeData = tree(source);
             const nodes = treeData.descendants();
             const links = treeData.descendants().slice(1);
 
             // Normalize for fixed-depth
-            nodes.forEach(d => d.y = d.depth * 180);
+            nodes.forEach(d => d.y = d.depth * 120);
 
             // Update nodes
-            const node = g.selectAll("g.node")
+            const node = group.selectAll("g.node")
                 .data(nodes, d => d.id || (d.id = ++i));
 
             // Enter new nodes
@@ -325,26 +495,10 @@
                 .attr("r", 1e-6)
                 .attr("class", d => `node ${d.data.type}`)
                 .on("mouseover", function(event, d) {
-                    tooltip.transition()
-                        .duration(200)
-                        .style("opacity", .9);
-                    
-                    const content = d.data.content.length > 200 ? 
-                        d.data.content.substring(0, 200) + "..." : 
-                        d.data.content;
-                    
-                    tooltip.html(`
-                        <strong>${d.data.type.toUpperCase()}</strong><br/>
-                        ${content}
-                        ${d.data.model ? `<br/><em>Model: ${d.data.model}</em>` : ''}
-                    `)
-                        .style("left", (event.pageX + 10) + "px")
-                        .style("top", (event.pageY - 28) + "px");
+                    showTooltip(event, d);
                 })
                 .on("mouseout", function(d) {
-                    tooltip.transition()
-                        .duration(500)
-                        .style("opacity", 0);
+                    hideTooltipDelayed();
                 });
 
             // Add labels
@@ -357,7 +511,7 @@
                 .style("font-weight", "bold")
                 .style("text-shadow", "1px 1px 2px rgba(0,0,0,0.5)")
                 .text(d => {
-                    const maxLength = 15;
+                    const maxLength = 12;
                     const text = d.data.content.replace(/\n/g, ' ');
                     return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
                 });
@@ -370,7 +524,7 @@
                 .attr("transform", d => `translate(${d.y},${d.x})`);
 
             nodeUpdate.select("circle.node")
-                .attr("r", 10)
+                .attr("r", 8)
                 .attr("class", d => `node ${d.data.type}`)
                 .attr("cursor", "pointer");
 
@@ -387,7 +541,7 @@
                 .style("fill-opacity", 1e-6);
 
             // Update links
-            const link = g.selectAll("path.link")
+            const link = group.selectAll("path.link")
                 .data(links, d => d.id);
 
             // Enter new links
@@ -442,17 +596,19 @@
         }
 
         function expandAll() {
-            if (root) {
-                expandAllNodes(root);
-                update(root);
-            }
+            forests.forEach(forestInfo => {
+                expandAllNodes(forestInfo.root);
+                updateTree(forestInfo);
+            });
         }
 
         function collapseAll() {
-            if (root) {
-                root.children.forEach(collapse);
-                update(root);
-            }
+            forests.forEach(forestInfo => {
+                if (forestInfo.root.children) {
+                    forestInfo.root.children.forEach(collapse);
+                    updateTree(forestInfo);
+                }
+            });
         }
 
         function expandAllNodes(d) {
