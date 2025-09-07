@@ -20,8 +20,8 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// If no arguments provided, show help message
 		if len(args) == 0 {
-			// Initialize database
-			if err := initializeDatabase(); err != nil {
+			// Initialize database (close after init since we just want to ensure it exists)
+			if _, err := initializeDatabase(true); err != nil {
 				log.Fatalf("Failed to initialize database: %v", err)
 			}
 			fmt.Println("🌳 Hello from bai! Use --help to see available commands.")
@@ -38,28 +38,13 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Get user's home directory
-		homeDir, err := os.UserHomeDir()
+		// Initialize database
+		database, err := initializeDatabase(false)
 		if err != nil {
-			fmt.Printf("\033[31m❌ Failed to get home directory: %v\033[0m\n", err)
-			os.Exit(1)
-		}
-
-		// Create database path in user's home directory
-		dbPath := filepath.Join(homeDir, ".bonsai", "bonsai.db")
-
-		// Create and initialize database
-		database, err := db.NewDatabase(dbPath)
-		if err != nil {
-			fmt.Printf("\033[31m❌ Failed to create database: %v\033[0m\n", err)
+			fmt.Printf("\033[31m❌ %v\033[0m\n", err)
 			os.Exit(1)
 		}
 		defer database.Close()
-
-		if err := database.Initialize(); err != nil {
-			fmt.Printf("\033[31m❌ Failed to initialize database: %v\033[0m\n", err)
-			os.Exit(1)
-		}
 
 		// Get current working node
 		currentNodeID, err := database.GetCurrentNode()
@@ -108,11 +93,13 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
-func initializeDatabase() error {
+// initializeDatabase creates and initializes the database, returning the connection
+// If closeAfterInit is true, closes the connection and returns nil database
+func initializeDatabase(closeAfterInit bool) (*db.Database, error) {
 	// Get user's home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+		return nil, fmt.Errorf("failed to get home directory: %w", err)
 	}
 
 	// Create database path in user's home directory
@@ -121,16 +108,21 @@ func initializeDatabase() error {
 	// Create and initialize database
 	database, err := db.NewDatabase(dbPath)
 	if err != nil {
-		return fmt.Errorf("failed to create database: %w", err)
+		return nil, fmt.Errorf("failed to create database: %w", err)
 	}
-	defer database.Close()
 
 	if err := database.Initialize(); err != nil {
-		return fmt.Errorf("failed to initialize database: %w", err)
+		database.Close()
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	fmt.Printf("📊 Database created at: \033[90m%s\033[0m\n", dbPath)
-	return nil
+	if closeAfterInit {
+		fmt.Printf("📊 Database created at: \033[90m%s\033[0m\n", dbPath)
+		database.Close()
+		return nil, nil
+	}
+
+	return database, nil
 }
 
 func init() {
