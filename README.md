@@ -152,3 +152,6 @@ Custom database
 ```
 ./bai visualize --database ./custom.db
 ```
+
+# How is `bai` pronounced?
+It is pronounced "bye", as in *NSYNC's "Bye Bye Bye".
