@@ -124,16 +124,26 @@ func (db *Database) CreateRootNode(content string, model *string) (*Node, error)
 
 // CreateChildNode creates a new child node with the given content, parent, and optional model
 func (db *Database) CreateChildNode(content, parentID string, model *string) (*Node, error) {
+	return db.CreateChildNodeWithType(content, parentID, "user", model)
+}
+
+// CreateChildNodeWithType creates a new child node with specific type
+func (db *Database) CreateChildNodeWithType(content, parentID, nodeType string, model *string) (*Node, error) {
 	// Verify parent exists
 	_, err := db.GetNodeByID(parentID)
 	if err != nil {
 		return nil, fmt.Errorf("parent node not found: %w", err)
 	}
 
+	// Validate node type
+	if nodeType != "user" && nodeType != "llm" {
+		return nil, fmt.Errorf("invalid node type: %s (must be 'user' or 'llm')", nodeType)
+	}
+
 	node := &Node{
 		ID:       uuid.New().String(),
 		Content:  content,
-		Type:     "user",
+		Type:     nodeType,
 		Parent:   &parentID,
 		Children: "[]",
 		Model:    model,
