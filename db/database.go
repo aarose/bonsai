@@ -295,6 +295,38 @@ func (db *Database) GetNodeByID(nodeID string) (*Node, error) {
 	return node, nil
 }
 
+// GetDirectChildren retrieves all direct children of a node (non-recursive)
+func (db *Database) GetDirectChildren(parentID string) ([]*Node, error) {
+	query := `
+		SELECT id, content, type, parent, children, model
+		FROM Node
+		WHERE parent = ?
+		ORDER BY id
+	`
+
+	rows, err := db.conn.Query(query, parentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query children of node %s: %w", parentID, err)
+	}
+	defer rows.Close()
+
+	var nodes []*Node
+	for rows.Next() {
+		node := &Node{}
+		err := rows.Scan(&node.ID, &node.Content, &node.Type, &node.Parent, &node.Children, &node.Model)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan child node: %w", err)
+		}
+		nodes = append(nodes, node)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over child rows: %w", err)
+	}
+
+	return nodes, nil
+}
+
 // DeleteNodeAndAllChildren deletes a node and all its descendants recursively
 func (db *Database) DeleteNodeAndAllChildren(nodeID string) (int, error) {
 	// First, get all nodes to be deleted
