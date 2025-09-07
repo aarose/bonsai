@@ -278,6 +278,23 @@ func (db *Database) collectNodeAndChildren(nodeID string, allNodes *[]*Node, vis
 	return nil
 }
 
+// GetNodeByID retrieves a single node by its ID
+func (db *Database) GetNodeByID(nodeID string) (*Node, error) {
+	query := `SELECT id, content, type, parent, children, model FROM Node WHERE id = ?`
+	row := db.conn.QueryRow(query, nodeID)
+
+	node := &Node{}
+	err := row.Scan(&node.ID, &node.Content, &node.Type, &node.Parent, &node.Children, &node.Model)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("node with ID %s not found", nodeID)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan node %s: %w", nodeID, err)
+	}
+
+	return node, nil
+}
+
 // DeleteNodeAndAllChildren deletes a node and all its descendants recursively
 func (db *Database) DeleteNodeAndAllChildren(nodeID string) (int, error) {
 	// First, get all nodes to be deleted
