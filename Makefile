@@ -3,7 +3,7 @@ MAIN_PACKAGE=./main.go
 
 .PHONY: build
 build:
-	go build -o bin/$(BINARY_NAME) $(MAIN_PACKAGE)
+	go build -o $(BINARY_NAME) $(MAIN_PACKAGE)
 
 .PHONY: install
 install:
@@ -12,7 +12,7 @@ install:
 .PHONY: clean
 clean:
 	go clean
-	rm -rf bin/
+	rm $(BINARY_NAME)
 
 .PHONY: test
 test:
