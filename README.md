@@ -169,6 +169,24 @@ make install       # Install globally
 make test          # Run tests
 ```
 
+### Release Process
+```bash
+# 1. Update version in cmd/version.go (e.g., v0.1.0 → v0.2.0)
+
+# 2. Commit and tag the release
+git add .
+git commit -m "Bump version to v0.2.0"
+git tag -a v0.2.0 -m "Release v0.2.0"
+
+# 3. Push to GitHub
+git push origin main --tags
+
+# 4. Build cross-platform release binaries
+make release
+
+# 5. Add the binaries to GitHub Releases as release assets
+```
+
 ### Test fixture -- generate fake convo
 
 Run with default database (bonsai.db)
