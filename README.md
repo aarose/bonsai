@@ -16,16 +16,35 @@ outcomes.
 
 ## Installation
 
+### Option 1: Install directly (recommended)
 ```bash
 go install github.com/aarose/bonsai@latest
 ```
 
-Or build from source:
+### Option 2: Build from source
 ```bash
 git clone https://github.com/aarose/bonsai.git
 cd bonsai
 go build -o bai
 ```
+
+To make the binary globally available (so you can run `bai` instead of `./bai`):
+```bash
+# Use the Makefile to install to your Go bin directory
+make install
+
+# Add Go's bin directory to your PATH if it's not already there
+echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc  # or ~/.bashrc
+source ~/.zshrc  # or source ~/.bashrc
+
+# Alternative: manually move to a system directory
+sudo mv bai /usr/local/bin/
+
+# Or add the current directory to your PATH (temporary)
+export PATH=$PATH:$(pwd)
+```
+
+**Note**: After running `make install`, you may need to add `$HOME/go/bin` to your PATH as shown above.
 
 ## LLM API Setup
 

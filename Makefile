@@ -7,7 +7,8 @@ build:
 
 .PHONY: install
 install:
-	go install $(MAIN_PACKAGE)
+	go build -o $(BINARY_NAME) $(MAIN_PACKAGE)
+	cp $(BINARY_NAME) $(HOME)/go/bin/$(BINARY_NAME)
 
 .PHONY: clean
 clean:
