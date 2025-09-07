@@ -57,19 +57,16 @@ var seedsCmd = &cobra.Command{
 		}
 
 		fmt.Printf("🌱 Found %d seed(s) in the Bonsai garden:\n\n", len(rootNodes))
-		for i, node := range rootNodes {
-			prefix := "  "
+		for _, node := range rootNodes {
 			if currentNodeID != nil && *currentNodeID == node.ID {
-				prefix = "* " // Mark current node with asterisk
+				fmt.Printf("ID: \033[33m%s\033[0m \033[32m(current working node)\033[0m\n", node.ID)
+			} else {
+				fmt.Printf("ID: \033[33m%s\033[0m\n", node.ID)
 			}
-			fmt.Printf("%s%d. ID: %s\n", prefix, i+1, node.ID)
-			fmt.Printf("%s   Content: %s\n", prefix, node.Content)
 			if node.Model != nil {
-				fmt.Printf("%s   Model: %s\n", prefix, *node.Model)
+				fmt.Printf("Model: %s\n", *node.Model)
 			}
-			if currentNodeID != nil && *currentNodeID == node.ID {
-				fmt.Printf("%s   (current working node)\n", prefix)
-			}
+			fmt.Printf("Message: %s\n", node.Content)
 			fmt.Println()
 		}
 	},
