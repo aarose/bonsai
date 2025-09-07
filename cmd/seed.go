@@ -20,14 +20,14 @@ var seedCmd = &cobra.Command{
 		// Get LLM flag value
 		llm, err := cmd.Flags().GetString("llm")
 		if err != nil {
-			fmt.Printf("Failed to get llm flag: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get llm flag: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Get user's home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			fmt.Printf("Failed to get home directory: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get home directory: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -37,13 +37,13 @@ var seedCmd = &cobra.Command{
 		// Create and initialize database
 		database, err := db.NewDatabase(dbPath)
 		if err != nil {
-			fmt.Printf("Failed to create database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 		defer database.Close()
 
 		if err := database.Initialize(); err != nil {
-			fmt.Printf("Failed to initialize database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to initialize database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -54,15 +54,15 @@ var seedCmd = &cobra.Command{
 		}
 		node, err := database.CreateRootNode(content, model)
 		if err != nil {
-			fmt.Printf("Failed to create seed node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create seed node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Created seed node with ID: \033[33m%s\033[0m\n", node.ID)
+		fmt.Printf("🌱 \033[32mCreated seed node with ID:\033[0m \033[33m%s\033[0m\n", node.ID)
 		if node.Model != nil {
-			fmt.Printf("Model: %s\n", *node.Model)
+			fmt.Printf("🧠 Model: \033[35m%s\033[0m\n", *node.Model)
 		}
-		fmt.Printf("Message: %s\n", node.Content)
+		fmt.Printf("💬 Message: \033[90m%s\033[0m\n", node.Content)
 	},
 }
 

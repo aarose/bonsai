@@ -22,7 +22,7 @@ var pruneCmd = &cobra.Command{
 		// Get user's home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			fmt.Printf("Failed to get home directory: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get home directory: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -32,30 +32,30 @@ var pruneCmd = &cobra.Command{
 		// Create and initialize database
 		database, err := db.NewDatabase(dbPath)
 		if err != nil {
-			fmt.Printf("Failed to create database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 		defer database.Close()
 
 		if err := database.Initialize(); err != nil {
-			fmt.Printf("Failed to initialize database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to initialize database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Get the node to be deleted and preview what will be affected
 		nodesToDelete, err := database.GetNodeAndAllChildren(nodeID)
 		if err != nil {
-			fmt.Printf("Failed to get node and children: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get node and children: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		if len(nodesToDelete) == 0 {
-			fmt.Printf("Node with ID '%s' not found.\n", nodeID)
+			fmt.Printf("\033[31m❌ Node with ID '%s' not found.\033[0m\n", nodeID)
 			os.Exit(1)
 		}
 
 		// Show what will be deleted
-		fmt.Printf("🪚 This will delete the following %d node(s):\n\n", len(nodesToDelete))
+			fmt.Printf("🪚 \033[33mThis will delete the following %d node(s):\033[0m\n\n", len(nodesToDelete))
 		for i, node := range nodesToDelete {
 			indent := ""
 			if i > 0 { // Child nodes get indented
@@ -63,16 +63,22 @@ var pruneCmd = &cobra.Command{
 			} else { // Root node being deleted
 				indent = "• "
 			}
-			fmt.Printf("%s\033[33m%s\033[0m: %s\n", indent, node.ID, truncateContent(node.Content, 50))
+			var typeIcon string
+			if node.Type == "user" {
+				typeIcon = "👤"
+			} else {
+				typeIcon = "🤖"
+			}
+			fmt.Printf("%s%s \033[33m%s\033[0m: \033[90m%s\033[0m\n", indent, typeIcon, node.ID, truncateContent(node.Content, 50))
 			if node.Model != nil {
-				fmt.Printf("%s   Model: %s\n", strings.Repeat(" ", len(indent)), *node.Model)
+				fmt.Printf("%s🧠 Model: \033[35m%s\033[0m\n", strings.Repeat(" ", len(indent)), *node.Model)
 			}
 		}
 
 		// Check if current node will be affected
 		currentNodeID, err := database.GetCurrentNode()
 		if err != nil {
-			fmt.Printf("Failed to get current node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get current node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -81,44 +87,44 @@ var pruneCmd = &cobra.Command{
 			for _, node := range nodesToDelete {
 				if *currentNodeID == node.ID {
 					willDeleteCurrent = true
-					fmt.Printf("\n⚠️  WARNING: This will delete your current working node!\n")
+					fmt.Printf("\n\033[33m⚠️  WARNING: This will delete your current working node!\033[0m\n")
 					break
 				}
 			}
 		}
 
 		// Ask for confirmation
-		fmt.Printf("\nAre you sure you want to prune these nodes? This cannot be undone. (y/N): ")
+		fmt.Printf("\n\033[33mAre you sure you want to prune these nodes? This cannot be undone.\033[0m \033[1m(y/N):\033[0m ")
 		reader := bufio.NewReader(os.Stdin)
 		response, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Printf("Failed to read input: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to read input: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		response = strings.TrimSpace(strings.ToLower(response))
 		if response != "y" && response != "yes" {
-			fmt.Println("Pruning cancelled.")
+			fmt.Println("\033[90mPruning cancelled.\033[0m")
 			return
 		}
 
 		// Perform the deletion
 		deletedCount, err := database.DeleteNodeAndAllChildren(nodeID)
 		if err != nil {
-			fmt.Printf("Failed to delete nodes: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to delete nodes: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Clear current node if it was deleted
 		if willDeleteCurrent {
 			if err := database.ClearCurrentNode(); err != nil {
-				fmt.Printf("Deleted nodes but failed to clear current node: %v\n", err)
+				fmt.Printf("\033[33m⚠️  Deleted nodes but failed to clear current node: %v\033[0m\n", err)
 			} else {
-				fmt.Printf("Current working node has been cleared.\n")
+				fmt.Printf("\033[90mCurrent working node has been cleared.\033[0m\n")
 			}
 		}
 
-		fmt.Printf("✅ Successfully pruned %d node(s) from the Bonsai tree.\n", deletedCount)
+		fmt.Printf("\033[32m✅ Successfully pruned %d node(s) from the Bonsai tree.\033[0m\n", deletedCount)
 	},
 }
 

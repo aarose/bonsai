@@ -11,7 +11,7 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version number of bai",
 	Long:  `All software has versions. This is bai's`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("bai v0.1.0")
+		fmt.Println("🌳 \033[32mbai v0.1.0\033[0m")
 	},
 }
 

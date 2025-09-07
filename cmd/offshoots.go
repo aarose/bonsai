@@ -18,7 +18,7 @@ var offshootsCmd = &cobra.Command{
 		// Get user's home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			fmt.Printf("Failed to get home directory: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get home directory: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -28,48 +28,46 @@ var offshootsCmd = &cobra.Command{
 		// Create and initialize database
 		database, err := db.NewDatabase(dbPath)
 		if err != nil {
-			fmt.Printf("Failed to create database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 		defer database.Close()
 
 		if err := database.Initialize(); err != nil {
-			fmt.Printf("Failed to initialize database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to initialize database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Get current working node
 		currentNodeID, err := database.GetCurrentNode()
 		if err != nil {
-			fmt.Printf("Failed to get current node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get current node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		if currentNodeID == nil {
-			fmt.Println("No current working node set. Use 'bai seed' to create a root node or 'bai checkout' to move to an existing node.")
+			fmt.Println("\033[90mℹ️  No current working node set. Use 'bai seed' to create a root node or 'bai checkout' to move to an existing node.\033[0m")
 			return
 		}
 
 		// Get direct children of the current node
 		children, err := database.GetDirectChildren(*currentNodeID)
 		if err != nil {
-			fmt.Printf("Failed to get child nodes: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get child nodes: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		if len(children) == 0 {
-			fmt.Printf("No offshoots found for current node: \033[33m%s\033[0m\n", *currentNodeID)
+			fmt.Printf("🌿 No offshoots found for current node: \033[33m%s\033[0m\n", *currentNodeID)
 			return
 		}
 
-		fmt.Printf("Child nodes of current working node (\033[33m%s\033[0m):\n\n", *currentNodeID)
+		fmt.Printf("🌿 Child nodes of current working node (\033[33m%s\033[0m):\n\n", *currentNodeID)
 
 		for i, child := range children {
-			// Show node number for easier reference
-			fmt.Printf("%d. ID: \033[33m%s\033[0m\n", i+1, child.ID)
-			fmt.Printf("   Type: %s\n", child.Type)
+			fmt.Printf("ID: \033[33m%s\033[0m\n",child.ID)
 			if child.Model != nil {
-				fmt.Printf("   Model: %s\n", *child.Model)
+				fmt.Printf("🧠 Model: \033[35m%s\033[0m\n", *child.Model)
 			}
 
 			// Show a preview of the content (first 100 characters)
@@ -79,7 +77,7 @@ var offshootsCmd = &cobra.Command{
 			}
 			// Replace newlines with spaces for cleaner display
 			content = strings.ReplaceAll(content, "\n", " ")
-			fmt.Printf("   Content: %s\n", content)
+			fmt.Printf("💬 Message: \033[90m%s\033[0m\n", content)
 
 			// Add spacing between nodes except for the last one
 			if i < len(children)-1 {
@@ -87,7 +85,7 @@ var offshootsCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Printf("\nTotal: %d child node(s)\n", len(children))
+		fmt.Printf("\n\033[90mTotal: %d child node(s)\033[0m\n", len(children))
 	},
 }
 

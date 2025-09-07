@@ -24,7 +24,7 @@ var rootCmd = &cobra.Command{
 			if err := initializeDatabase(); err != nil {
 				log.Fatalf("Failed to initialize database: %v", err)
 			}
-			fmt.Println("Hello from bai! Use --help to see available commands.")
+			fmt.Println("🌳 Hello from bai! Use --help to see available commands.")
 			return
 		}
 
@@ -34,14 +34,14 @@ var rootCmd = &cobra.Command{
 		// Get LLM flag value
 		llm, err := cmd.Flags().GetString("llm")
 		if err != nil {
-			fmt.Printf("Failed to get llm flag: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get llm flag: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Get user's home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			fmt.Printf("Failed to get home directory: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get home directory: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -51,32 +51,32 @@ var rootCmd = &cobra.Command{
 		// Create and initialize database
 		database, err := db.NewDatabase(dbPath)
 		if err != nil {
-			fmt.Printf("Failed to create database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 		defer database.Close()
 
 		if err := database.Initialize(); err != nil {
-			fmt.Printf("Failed to initialize database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to initialize database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Get current working node
 		currentNodeID, err := database.GetCurrentNode()
 		if err != nil {
-			fmt.Printf("Failed to get current node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get current node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		if currentNodeID == nil {
-			fmt.Println("No current working node set. Use 'bai seed \"message\"' to create a root node first.")
+			fmt.Println("🌱 No current working node set. Use 'bai seed \"message\"' to create a root node first.")
 			return
 		}
 
 		// Get the current working node to inherit model
 		currentNode, err := database.GetNodeByID(*currentNodeID)
 		if err != nil {
-			fmt.Printf("Failed to get current node details: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get current node details: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -91,16 +91,16 @@ var rootCmd = &cobra.Command{
 		// Create child node
 		node, err := database.CreateChildNode(message, *currentNodeID, model)
 		if err != nil {
-			fmt.Printf("Failed to create child node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create child node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Created child node with ID: %s\n", node.ID)
-		fmt.Printf("Parent: %s\n", *currentNodeID)
+		fmt.Printf("🔄 \033[32mCreated child node with ID:\033[0m \033[33m%s\033[0m\n", node.ID)
+		fmt.Printf("⬆️  Parent: \033[33m%s\033[0m\n", *currentNodeID)
 		if node.Model != nil {
-			fmt.Printf("Model: %s\n", *node.Model)
+			fmt.Printf("🧠 Model: \033[35m%s\033[0m\n", *node.Model)
 		}
-		fmt.Printf("Message: %s\n", node.Content)
+		fmt.Printf("💬 Message: \033[90m%s\033[0m\n", node.Content)
 	},
 }
 
@@ -129,7 +129,7 @@ func initializeDatabase() error {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	fmt.Printf("Database created at: %s\n", dbPath)
+	fmt.Printf("📊 Database created at: \033[90m%s\033[0m\n", dbPath)
 	return nil
 }
 

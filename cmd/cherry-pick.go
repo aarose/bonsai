@@ -21,7 +21,7 @@ var cherryPickCmd = &cobra.Command{
 		// Get user's home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			fmt.Printf("Failed to get home directory: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get home directory: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -31,38 +31,38 @@ var cherryPickCmd = &cobra.Command{
 		// Create and initialize database
 		database, err := db.NewDatabase(dbPath)
 		if err != nil {
-			fmt.Printf("Failed to create database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 		defer database.Close()
 
 		if err := database.Initialize(); err != nil {
-			fmt.Printf("Failed to initialize database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to initialize database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Get current working node
 		currentNodeID, err := database.GetCurrentNode()
 		if err != nil {
-			fmt.Printf("Failed to get current node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get current node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		if currentNodeID == nil {
-			fmt.Println("No current working node set. Use 'bai seed' to create a root node or 'bai checkout' to move to an existing node.")
+			fmt.Println("\033[90mℹ️  No current working node set. Use 'bai seed' to create a root node or 'bai checkout' to move to an existing node.\033[0m")
 			return
 		}
 
 		// Get the source node to cherry-pick
 		sourceNode, err := database.GetNodeByID(sourceNodeID)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			fmt.Printf("\033[31m❌ Error: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Check if we're trying to cherry-pick the current working node
 		if sourceNodeID == *currentNodeID {
-			fmt.Printf("Cannot cherry-pick the current working node onto itself.\n")
+			fmt.Printf("\033[31m❌ Cannot cherry-pick the current working node onto itself.\033[0m\n")
 			os.Exit(1)
 		}
 
@@ -70,17 +70,23 @@ var cherryPickCmd = &cobra.Command{
 		// We preserve the source node's type and model
 		duplicateNode, err := database.CreateChildNodeWithType(sourceNode.Content, *currentNodeID, sourceNode.Type, sourceNode.Model)
 		if err != nil {
-			fmt.Printf("Failed to create cherry-picked node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create cherry-picked node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("🍒 Cherry-picked node: \033[33m%s\033[0m\n", sourceNodeID)
-		fmt.Printf("Created new node with ID: \033[33m%s\033[0m\n", duplicateNode.ID)
-		fmt.Printf("Type: %s\n", duplicateNode.Type)
+			fmt.Printf("🍒 \033[32mCherry-picked node:\033[0m \033[33m%s\033[0m\n", sourceNodeID)
+			fmt.Printf("✨ \033[32mCreated new node with ID:\033[0m \033[33m%s\033[0m\n", duplicateNode.ID)
+			var typeIcon string
+			if duplicateNode.Type == "user" {
+				typeIcon = "👤"
+			} else {
+				typeIcon = "🤖"
+			}
+			fmt.Printf("%s Type: \033[90m%s\033[0m\n", typeIcon, duplicateNode.Type)
 
-		fmt.Printf("Parent: \033[33m%s\033[0m\n", *currentNodeID)
+			fmt.Printf("⬆️  Parent: \033[33m%s\033[0m\n", *currentNodeID)
 		if duplicateNode.Model != nil {
-			fmt.Printf("Model: %s\n", *duplicateNode.Model)
+			fmt.Printf("🧠 Model: \033[35m%s\033[0m\n", *duplicateNode.Model)
 		}
 
 		// Show a preview of the content
@@ -89,9 +95,9 @@ var cherryPickCmd = &cobra.Command{
 			content = content[:200] + "..."
 		}
 		content = strings.ReplaceAll(content, "\n", " ")
-		fmt.Printf("Content: %s\n", content)
+			fmt.Printf("💬 Message: \033[90m%s\033[0m\n", content)
 
-		fmt.Printf("\nSuccessfully cherry-picked content from \033[33m%s\033[0m to new node \033[33m%s\033[0m\n", sourceNodeID, duplicateNode.ID)
+			fmt.Printf("\n\033[32m✓ Successfully cherry-picked content from \033[33m%s\033[32m to new node \033[33m%s\033[0m\n", sourceNodeID, duplicateNode.ID)
 	},
 }
 

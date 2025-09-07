@@ -20,7 +20,7 @@ var checkoutCmd = &cobra.Command{
 		// Get user's home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			fmt.Printf("Failed to get home directory: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get home directory: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
@@ -30,51 +30,57 @@ var checkoutCmd = &cobra.Command{
 		// Create and initialize database
 		database, err := db.NewDatabase(dbPath)
 		if err != nil {
-			fmt.Printf("Failed to create database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to create database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 		defer database.Close()
 
 		if err := database.Initialize(); err != nil {
-			fmt.Printf("Failed to initialize database: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to initialize database: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Check if the node exists
 		node, err := database.GetNodeByID(nodeID)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			fmt.Printf("\033[31m❌ Error: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Get current working node for comparison
 		currentNodeID, err := database.GetCurrentNode()
 		if err != nil {
-			fmt.Printf("Failed to get current node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to get current node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
 		// Check if we're already on this node
 		if currentNodeID != nil && *currentNodeID == nodeID {
-			fmt.Printf("Already on node \033[33m%s\033[0m\n", nodeID)
+			fmt.Printf("📍 Already on node \033[33m%s\033[0m\n", nodeID)
 			return
 		}
 
 		// Set the new current node
 		if err := database.SetCurrentNode(nodeID); err != nil {
-			fmt.Printf("Failed to set current node: %v\n", err)
+			fmt.Printf("\033[31m❌ Failed to set current node: %v\033[0m\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Moved to node: \033[33m%s\033[0m\n", nodeID)
-		fmt.Printf("Type: %s\n", node.Type)
+		fmt.Printf("📍 \033[32mMoved to node:\033[0m \033[33m%s\033[0m\n", nodeID)
+		var typeIcon string
+		if node.Type == "user" {
+			typeIcon = "👤"
+		} else {
+			typeIcon = "🤖"
+		}
+		fmt.Printf("%s Type: \033[90m%s\033[0m\n", typeIcon, node.Type)
 		if node.Model != nil {
-			fmt.Printf("Model: %s\n", *node.Model)
+			fmt.Printf("🧠 Model: \033[35m%s\033[0m\n", *node.Model)
 		}
 		if node.Parent != nil {
-			fmt.Printf("Parent: \033[33m%s\033[0m\n", *node.Parent)
+			fmt.Printf("⬆️  Parent: \033[33m%s\033[0m\n", *node.Parent)
 		}
-		fmt.Printf("Content: %s\n", node.Content)
+		fmt.Printf("💬 Message: \033[90m%s\033[0m\n", node.Content)
 	},
 }
 
