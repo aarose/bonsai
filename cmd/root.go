@@ -1,12 +1,16 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/aarose/bonsai/db"
+	"github.com/aarose/bonsai/pkg/config"
+	"github.com/aarose/bonsai/pkg/llm"
 	"github.com/spf13/cobra"
 )
 
@@ -28,12 +32,12 @@ cultivate ideas, revisit roots, and guide your conversations toward meaningful
 outcomes.`
 
 var rootCmd = &cobra.Command{
-	Use:   "bai [message]",
-	Short: "🌳 Bonsai is a CLI tool for managing LLM conversation trees",
-	Long:  longDescription,
-	Args:                  cobra.ArbitraryArgs,
-	DisableFlagParsing:    false,
-	SilenceUsage:         true,
+	Use:                "bai [message]",
+	Short:              "🌳 Bonsai is a CLI tool for managing LLM conversation trees",
+	Long:               longDescription,
+	Args:               cobra.ArbitraryArgs,
+	DisableFlagParsing: false,
+	SilenceUsage:       true,
 	Run: func(cmd *cobra.Command, args []string) {
 		// If no arguments provided, show help message
 		if len(args) == 0 {
@@ -49,7 +53,7 @@ var rootCmd = &cobra.Command{
 		message := args[0]
 
 		// Get LLM flag value
-		llm, err := cmd.Flags().GetString("llm")
+		llmModel, err := cmd.Flags().GetString("llm")
 		if err != nil {
 			fmt.Printf("\033[31m❌ Failed to get llm flag: %v\033[0m\n", err)
 			os.Exit(1)
@@ -84,8 +88,8 @@ var rootCmd = &cobra.Command{
 
 		// Determine which model to use
 		var model *string
-		if llm != "" {
-			model = &llm // Use flag if provided
+		if llmModel != "" {
+			model = &llmModel // Use flag if provided
 		} else {
 			model = currentNode.Model // Inherit from parent
 		}
@@ -103,6 +107,46 @@ var rootCmd = &cobra.Command{
 			fmt.Printf("🧠 Model: \033[35m%s\033[0m\n", *node.Model)
 		}
 		fmt.Printf("💬 Message: \033[90m%s\033[0m\n", node.Content)
+
+		// Generate LLM response if model is available
+		if model != nil && *model != "" {
+			fmt.Printf("Generating LLM response...\n")
+
+			// Get API key from environment or config
+			apiKey := config.GetAPIKey(*model)
+			if apiKey == "" {
+				fmt.Printf("Warning: No API key found for %s. Set %s environment variable.\n", *model, config.GetAPIKeyEnvVar(*model))
+			} else {
+				// Create LLM client
+				llmConfig := llm.Config{
+					APIKey:    apiKey,
+					MaxTokens: 1000, // Reasonable default
+				}
+
+				client, err := llm.NewClient(*model, llmConfig)
+				if err != nil {
+					fmt.Printf("Warning: Failed to create LLM client: %v\n", err)
+				} else {
+					// Generate response with timeout
+					ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+					defer cancel()
+
+					response, err := client.GenerateResponse(ctx, message, *model)
+					if err != nil {
+						fmt.Printf("Warning: Failed to get LLM response: %v\n", err)
+					} else {
+						// Create child node with LLM response
+						llmNode, err := database.CreateLLMResponseNode(node.ID, response, *model)
+						if err != nil {
+							fmt.Printf("Warning: Failed to create LLM response node: %v\n", err)
+						} else {
+							fmt.Printf("Created LLM response node with ID: %s\n", llmNode.ID)
+							fmt.Printf("LLM Response: %s\n", llmNode.Content)
+						}
+					}
+				}
+			}
+		}
 	},
 }
 
