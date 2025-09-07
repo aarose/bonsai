@@ -1,5 +1,19 @@
-# bonsai
-git for LLM convos
+# Bonsai
+🌳 Bonsai is a CLI tool for managing LLM conversation trees. AI's in the name.
+
+![Bonsai logo](assets/bonsai.png)
+
+It provides a structured way to explore multiple directions of a conversation, experiment freely, and return to earlier points without friction.
+
+Think of it as Git for your LLM sessions: a system that lets you branch, reseed, and graft ideas without losing track of the bigger picture.
+
+With Bonsai, you can:
+• Maintain clean histories
+• Compare alternate paths
+• Keep your conversations organized as they grow
+
+The result is a workflow where creativity and control coexist, making it easy to cultivate ideas, revisit roots, and guide your conversations toward meaningful
+outcomes.
 
 ## Installation
 
@@ -32,6 +46,8 @@ export ANTHROPIC_API_KEY="sk-ant-your-anthropic-api-key-here"
 - **OpenAI**: `gpt-3.5-turbo`, `gpt-4`, `gpt-4-turbo`, `gpt-4o`
 - **Anthropic**: `claude-3-haiku`, `claude-3-sonnet`, `claude-3-opus`, `claude-3-5-sonnet`
 
+Don't have an API key? See instructions below to generate a fake conversation tree to test bai out.
+
 ## Usage
 
 ### Basic Commands
@@ -43,29 +59,32 @@ bai --help       # See help
 
 ### Conversation Management
 ```bash
-# Start a new conversation
+# Plant a seed and start a new conversation
 bai seed "I want to plan a trip to Japan"
 
 # Add to current conversation (automatically gets LLM response if model is set)
 bai "What's the best time of year to visit?" --llm gpt-4
 
-# View all conversation threads
+# View all conversation branches
 bai seeds
 
-# Show conversation history
+# Show conversation history on this branch
 bai log
 
-# Switch to different conversation thread
+# Switch to different conversation branch
 bai checkout <node-id>
 
 # View branching options
 bai offshoots
+
+# Copy some context from one conversation to another
+bai cherry-pick <node-id>
 ```
 
 ### LLM Integration
 When you use the `--llm` flag or set a model on a seed conversation, bai will:
 1. Create your user message as a node
-2. Automatically generate an LLM response 
+2. Automatically generate an LLM response
 3. Add the response as a child node
 4. Continue the conversation tree
 
@@ -117,6 +136,7 @@ go run scripts/generate_fake_data.go [database_path]
 ```
 
 ### Visualization
+![Visualization Screenshot](assets/visualization.png)
 
 Launch visualization (opens on http://localhost:8080)
 ```bash
