@@ -58,11 +58,32 @@ var seedsCmd = &cobra.Command{
 
 		fmt.Printf("🌱 Found %d seed(s) in the Bonsai garden:\n\n", len(rootNodes))
 		for _, node := range rootNodes {
-			if currentNodeID != nil && *currentNodeID == node.ID {
-				fmt.Printf("ID: \033[33m%s\033[0m \033[32m(current working node)\033[0m\n", node.ID)
-			} else {
-				fmt.Printf("ID: \033[33m%s\033[0m\n", node.ID)
+			var statusMessage string
+
+			if currentNodeID != nil {
+				// Check if this root node is the current working node
+				if *currentNodeID == node.ID {
+					statusMessage = " \033[32m(current working node)\033[0m"
+				} else {
+					// Check if current working node is a descendant of this root node
+					descendants, err := database.GetNodeAndAllChildren(node.ID)
+					if err != nil {
+						fmt.Printf("Warning: Failed to get descendants for node %s: %v\n", node.ID, err)
+					} else {
+						// Check descendants (excluding the root node itself)
+						for _, descendant := range descendants {
+							if descendant.ID == *currentNodeID && descendant.ID != node.ID {
+								statusMessage = " \033[36m(contains current working node)\033[0m"
+								break
+							}
+						}
+					}
+				}
 			}
+
+			// Print the node with highlighting if applicable
+			fmt.Printf("ID: \033[33m%s\033[0m%s\n", node.ID, statusMessage)
+
 			if node.Model != nil {
 				fmt.Printf("Model: %s\n", *node.Model)
 			}
