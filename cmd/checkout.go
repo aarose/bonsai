@@ -3,9 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/aarose/bonsai/db"
 	"github.com/spf13/cobra"
 )
 
@@ -17,28 +15,13 @@ var checkoutCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		nodeID := args[0]
 
-		// Get user's home directory
-		homeDir, err := os.UserHomeDir()
+		// Initialize database
+		database, err := initializeDatabase(false)
 		if err != nil {
-			fmt.Printf("\033[31m❌ Failed to get home directory: %v\033[0m\n", err)
-			os.Exit(1)
-		}
-
-		// Create database path in user's home directory
-		dbPath := filepath.Join(homeDir, ".bonsai", "bonsai.db")
-
-		// Create and initialize database
-		database, err := db.NewDatabase(dbPath)
-		if err != nil {
-			fmt.Printf("\033[31m❌ Failed to create database: %v\033[0m\n", err)
+			fmt.Printf("\033[31m❌ %v\033[0m\n", err)
 			os.Exit(1)
 		}
 		defer database.Close()
-
-		if err := database.Initialize(); err != nil {
-			fmt.Printf("\033[31m❌ Failed to initialize database: %v\033[0m\n", err)
-			os.Exit(1)
-		}
 
 		// Check if the node exists
 		node, err := database.GetNodeByID(nodeID)
