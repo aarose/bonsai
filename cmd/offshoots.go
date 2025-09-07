@@ -12,8 +12,8 @@ import (
 
 var offshootsCmd = &cobra.Command{
 	Use:   "offshoots",
-	Short: "List all child nodes of the current working node",
-	Long:  `List all direct child nodes of the current working node. Shows their ID, type, and a preview of their content.`,
+	Short: "List all conversation branches of the current working node",
+	Long:  `List all conversation branches of the current working node. Shows the node ID, type, and a preview of their content.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get user's home directory
 		homeDir, err := os.UserHomeDir()
@@ -58,15 +58,15 @@ var offshootsCmd = &cobra.Command{
 		}
 
 		if len(children) == 0 {
-			fmt.Printf("No offshoots found for current node: %s\n", *currentNodeID)
+			fmt.Printf("No offshoots found for current node: \033[33m%s\033[0m\n", *currentNodeID)
 			return
 		}
 
-		fmt.Printf("Child nodes of current working node (%s):\n\n", *currentNodeID)
+		fmt.Printf("Child nodes of current working node (\033[33m%s\033[0m):\n\n", *currentNodeID)
 
 		for i, child := range children {
 			// Show node number for easier reference
-			fmt.Printf("%d. ID: %s\n", i+1, child.ID)
+			fmt.Printf("%d. ID: \033[33m%s\033[0m\n", i+1, child.ID)
 			fmt.Printf("   Type: %s\n", child.Type)
 			if child.Model != nil {
 				fmt.Printf("   Model: %s\n", *child.Model)

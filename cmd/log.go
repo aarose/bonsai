@@ -70,11 +70,12 @@ var logCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("🪵 Log from current working node: %s\n", *currentNodeID)
+		fmt.Printf("🪵 Log from current working node: \033[33m%s\033[0m\n", *currentNodeID)
 		fmt.Printf("Current node type: %s\n", currentNode.Type)
 		if currentNode.Model != nil {
 			fmt.Printf("Current node model: %s\n", *currentNode.Model)
 		}
+		fmt.Printf("Current node message: %s\n", currentNode.Content)
 		fmt.Println()
 
 		// Determine how many levels to traverse

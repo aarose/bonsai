@@ -12,11 +12,8 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "bai [message]",
-	Short: "Bai is a CLI tool",
-	Long: `Bai is a command-line interface tool that provides various utilities.
-This application is built with love using Cobra in Go.
-
-If you provide a message, it will create a new user node as a child of the current working node.`,
+	Short: "Bonsai is a CLI tool for managing LLM conversation trees",
+	Long: `Bonsai is a CLI tool for managing LLM conversation trees.`,
 	Args:                  cobra.ArbitraryArgs,
 	DisableFlagParsing:    false,
 	SilenceUsage:         true,
@@ -99,12 +96,11 @@ If you provide a message, it will create a new user node as a child of the curre
 		}
 
 		fmt.Printf("Created child node with ID: %s\n", node.ID)
-		fmt.Printf("Content: %s\n", node.Content)
-		fmt.Printf("Type: %s\n", node.Type)
 		fmt.Printf("Parent: %s\n", *currentNodeID)
 		if node.Model != nil {
 			fmt.Printf("Model: %s\n", *node.Model)
 		}
+		fmt.Printf("Message: %s\n", node.Content)
 	},
 }
 

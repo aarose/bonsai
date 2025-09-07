@@ -13,8 +13,8 @@ import (
 
 var pruneCmd = &cobra.Command{
 	Use:   "prune <node-id>",
-	Short: "Delete a node and all of its children",
-	Long:  `Delete the specified node and all of its children recursively. This action cannot be undone.`,
+	Short: "Cut off a branch of the conversation tree, deleting it",
+	Long:  `Cut off a branch of the conversation tree, deleting it. This action cannot be undone.`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		nodeID := args[0]
@@ -55,7 +55,7 @@ var pruneCmd = &cobra.Command{
 		}
 
 		// Show what will be deleted
-		fmt.Printf("🗑️  This will delete the following %d node(s):\n\n", len(nodesToDelete))
+		fmt.Printf("🪚 This will delete the following %d node(s):\n\n", len(nodesToDelete))
 		for i, node := range nodesToDelete {
 			indent := ""
 			if i > 0 { // Child nodes get indented
@@ -63,7 +63,7 @@ var pruneCmd = &cobra.Command{
 			} else { // Root node being deleted
 				indent = "• "
 			}
-			fmt.Printf("%s%s: %s\n", indent, node.ID, truncateContent(node.Content, 50))
+			fmt.Printf("%s\033[33m%s\033[0m: %s\n", indent, node.ID, truncateContent(node.Content, 50))
 			if node.Model != nil {
 				fmt.Printf("%s   Model: %s\n", strings.Repeat(" ", len(indent)), *node.Model)
 			}

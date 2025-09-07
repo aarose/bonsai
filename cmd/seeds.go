@@ -11,8 +11,8 @@ import (
 
 var seedsCmd = &cobra.Command{
 	Use:   "seeds",
-	Short: "List all root nodes",
-	Long:  `List all root nodes (nodes without a parent) in the database.`,
+	Short: "List all root nodes (conversation tree seeds)",
+	Long:  `List all root nodes (conversation tree seeds)`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get user's home directory
 		homeDir, err := os.UserHomeDir()

@@ -12,8 +12,8 @@ import (
 
 var cherryPickCmd = &cobra.Command{
 	Use:   "cherry-pick <node-id>",
-	Short: "Duplicate a node's content as a child of the current working node",
-	Long:  `Cherry-pick duplicates the content of the specified node and creates it as a child of the current working node with a new ID.`,
+	Short: "Duplicate a node's content as a child of the current working node (graft a tree bud)",
+	Long:  `Duplicates the content of the specified node and creates it as a child of the current working node with a new ID.`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		sourceNodeID := args[0]
@@ -74,11 +74,11 @@ var cherryPickCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Printf("🍒 Cherry-picked node: %s\n", sourceNodeID)
-		fmt.Printf("Created new node with ID: %s\n", duplicateNode.ID)
+		fmt.Printf("🍒 Cherry-picked node: \033[33m%s\033[0m\n", sourceNodeID)
+		fmt.Printf("Created new node with ID: \033[33m%s\033[0m\n", duplicateNode.ID)
 		fmt.Printf("Type: %s\n", duplicateNode.Type)
 
-		fmt.Printf("Parent: %s\n", *currentNodeID)
+		fmt.Printf("Parent: \033[33m%s\033[0m\n", *currentNodeID)
 		if duplicateNode.Model != nil {
 			fmt.Printf("Model: %s\n", *duplicateNode.Model)
 		}
@@ -91,7 +91,7 @@ var cherryPickCmd = &cobra.Command{
 		content = strings.ReplaceAll(content, "\n", " ")
 		fmt.Printf("Content: %s\n", content)
 
-		fmt.Printf("\nSuccessfully cherry-picked content from %s to new node %s\n", sourceNodeID, duplicateNode.ID)
+		fmt.Printf("\nSuccessfully cherry-picked content from \033[33m%s\033[0m to new node \033[33m%s\033[0m\n", sourceNodeID, duplicateNode.ID)
 	},
 }
 

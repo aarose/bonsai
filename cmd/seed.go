@@ -11,8 +11,8 @@ import (
 
 var seedCmd = &cobra.Command{
 	Use:   "seed <content>",
-	Short: "Create a new root node with the given content",
-	Long:  `Create a new root node (no parent) with the provided content. The node type will be set to "user".`,
+	Short: "Create a conversation starting with this message",
+	Long:  `Create a conversation starting with this message and optional LLM model`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		content := args[0]
@@ -54,16 +54,15 @@ var seedCmd = &cobra.Command{
 		}
 		node, err := database.CreateRootNode(content, model)
 		if err != nil {
-			fmt.Printf("Failed to create root node: %v\n", err)
+			fmt.Printf("Failed to create seed node: %v\n", err)
 			os.Exit(1)
 		}
 
-		fmt.Printf("Created root node with ID: %s\n", node.ID)
-		fmt.Printf("Content: %s\n", node.Content)
-		fmt.Printf("Type: %s\n", node.Type)
+		fmt.Printf("Created seed node with ID: \033[33m%s\033[0m\n", node.ID)
 		if node.Model != nil {
 			fmt.Printf("Model: %s\n", *node.Model)
 		}
+		fmt.Printf("Message: %s\n", node.Content)
 	},
 }
 
